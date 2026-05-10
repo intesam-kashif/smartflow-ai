@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SmartFlow AI</title>
+<style>
+:root {
+  --bg: #f5f0eb;
+  --surface: #ffffff;
+  --border: rgba(0,0,0,0.08);
+  --text: #1a1a1a;
+  --text2: #666;
+  --text3: #999;
+  --accent: #1a1a1a;
+  --important-bg: #e1f5ee;
+  --important-text: #0f6e56;
+  --distraction-bg: #faece7;
+  --distraction-text: #993c1d;
+  --bento-cream: #ece7e1;
+  --bento-green: #1D9E75;
+  --bento-dark: #1a1a1a;
+  --dot-color: rgba(0,0,0,0.25);
+}
+.dark {
+  --bg: #111112;
+  --surface: #1c1c1e;
+  --border: rgba(255,255,255,0.08);
+  --text: #f0f0f0;
+  --text2: #aaa;
+  --text3: #666;
+  --accent: #f0f0f0;
+  --important-bg: #0a2e20;
+  --important-text: #5dcaa5;
+  --distraction-bg: #2e1508;
+  --distraction-text: #f0997b;
+  --bento-cream: #1e1e20;
+  --bento-green: #1D9E75;
+  --bento-dark: #2a2a2e;
+  --dot-color: rgba(255,182,193,0.35);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+
+/* TOPBAR */
+.topbar { display:flex; align-items:center; justify-content:space-between; padding: 14px 24px; border-bottom: 0.5px solid var(--border); background: var(--surface); position: sticky; top:0; z-index:10; }
+.topbar-left { display:flex; align-items:center; gap:10px; }
+.logo-dot { width:8px; height:8px; border-radius:50%; background:#1D9E75; }
+.logo-text { font-size:15px; font-weight:500; color: var(--text); }
+.topbar-right { display:flex; align-items:center; gap:10px; }
+.theme-btn { background: var(--bento-cream); border: none; border-radius:8px; padding:6px 12px; font-size:12px; color: var(--text2); cursor:pointer; transition:all 0.2s; font-family:inherit; }
+.theme-btn:hover { opacity:0.8; }
+.tabs { display:flex; gap:4px; background: var(--bento-cream); border-radius:8px; padding:3px; }
+.tab { padding:5px 14px; border-radius:6px; font-size:12px; cursor:pointer; color: var(--text2); transition:all 0.2s; border:none; background:transparent; font-family:inherit; }
+.tab.active { background: var(--surface); color: var(--text); font-weight:500; border: 0.5px solid var(--border); }
+
+/* PAGE WRAPPER */
+.page { display:none; padding: 20px 24px; max-width: 780px; margin: 0 auto; }
+.page.active { display:block; }
+
+/* BENTO GRID */
+.bento { display:grid; gap:10px; }
+
+/* CELLS */
+.cell { border-radius:14px; padding:18px; position:relative; z-index:1; }
+.cell-white  { background: var(--surface); border: 0.5px solid var(--border); }
+.cell-green  { background: #1D9E75; }
+.cell-dark   { background: var(--bento-dark); }
+.cell-cream  { background: var(--bento-cream); }
+.cell-teal   { background: var(--important-bg); }
+.cell-coral  { background: var(--distraction-bg); }
+.cell-span2  { grid-column: span 2; }
+
+.cell-lbl { font-size:10px; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; }
+.lbl-gray  { color: var(--text3); }
+.lbl-white { color: rgba(255,255,255,0.5); }
+.lbl-green { color: #0F6E56; }
+.lbl-coral { color: #993C1D; }
+
+/* ANALYZE PAGE BENTO */
+.bento-analyze { grid-template-columns: 1fr 1fr; }
+
+/* INPUT */
+textarea {
+  width:100%; background: var(--bg); border: 0.5px solid var(--border);
+  border-radius:10px; padding:14px; color: var(--text); font-size:14px;
+  resize:vertical; min-height:110px; outline:none; font-family:inherit;
+  transition:border-color 0.2s;
+}
+textarea:focus { border-color: var(--text3); }
+textarea::placeholder { color: var(--text3); }
+.chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.chip { background: var(--bento-cream); border-radius:999px; padding:4px 12px; font-size:11px; color: var(--text2); cursor:pointer; transition:all 0.15s; border:none; }
+.chip:hover { opacity:0.7; }
+
+/* BUTTONS */
+.analyze-btn { width:100%; padding:13px; background: var(--accent); border:none; border-radius:10px; color: var(--surface); font-size:14px; font-weight:500; cursor:pointer; margin-top:12px; font-family:inherit; transition:opacity 0.2s; }
+.analyze-btn:hover { opacity:0.85; }
+.analyze-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.bulk-btn { width:100%; padding:12px; background: var(--accent); border:none; border-radius:10px; color: var(--surface); font-size:14px; font-weight:500; cursor:pointer; margin-top:12px; font-family:inherit; transition:opacity 0.2s; }
+.bulk-btn:hover { opacity:0.85; }
+.bulk-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+/* RESULT */
+.result-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.result-title { font-size:18px; font-weight:500; color:#fff; }
+.pill { padding:4px 12px; border-radius:999px; font-size:11px; font-weight:500; }
+.pill-important { background: var(--important-bg); color: var(--important-text); }
+.pill-distraction { background: var(--distraction-bg); color: var(--distraction-text); }
+.result-quote { font-size:12px; color:rgba(255,255,255,0.6); margin-bottom:14px; line-height:1.6; }
+.bar-row { display:flex; justify-content:space-between; font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:5px; }
+.bar-bg { background: rgba(255,255,255,0.15); border-radius:999px; height:5px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:999px; transition:width 0.7s ease; }
+.bar-imp { background:#fff; }
+.bar-dis { background:#f0997b; }
+.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+.stat-box { background: rgba(255,255,255,0.1); border-radius:8px; padding:10px 14px; }
+.stat-box-label { font-size:11px; color:rgba(255,255,255,0.5); margin-bottom:3px; }
+.stat-box-val { font-size:15px; font-weight:500; color:#fff; }
+.error-box { background: var(--distraction-bg); border: 0.5px solid var(--distraction-text); border-radius:8px; padding:10px 14px; font-size:13px; color: var(--distraction-text); margin-top:8px; display:none; }
+
+/* STAT CELLS */
+.stat-big { font-size:32px; font-weight:500; color:#fff; margin-top:6px; }
+.stat-big-dark { font-size:32px; font-weight:500; color: var(--text); margin-top:6px; }
+.stat-big-green { font-size:32px; font-weight:500; color:#0F6E56; margin-top:6px; }
+.stat-big-coral { font-size:32px; font-weight:500; color:#993C1D; margin-top:6px; }
+.stat-sub { font-size:11px; color:rgba(255,255,255,0.4); margin-top:2px; }
+.stat-sub-dark { font-size:11px; color: var(--text3); margin-top:2px; }
+
+/* BULK PAGE */
+.bento-bulk { grid-template-columns: 1fr 1fr; }
+.bulk-textarea { width:100%; background: var(--bg); border: 0.5px solid var(--border); border-radius:10px; padding:14px; color: var(--text); font-size:13px; resize:vertical; min-height:150px; outline:none; font-family:inherit; transition:border-color 0.2s; }
+.bulk-textarea:focus { border-color: var(--text3); }
+.bulk-textarea::placeholder { color: var(--text3); }
+.bulk-results { display:flex; flex-direction:column; gap:8px; }
+.bulk-item { background: var(--surface); border: 0.5px solid var(--border); border-radius:10px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.bulk-item-text { font-size:13px; color: var(--text2); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bulk-item-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.bulk-conf { font-size:11px; color: var(--text3); }
+
+/* ANALYTICS PAGE */
+.bento-analytics { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.chart-wrap { background: var(--surface); border: 0.5px solid var(--border); border-radius:14px; padding:20px; margin-top:10px; position:relative; z-index:1; }
+.chart-title { font-size:13px; font-weight:500; margin-bottom:16px; color: var(--text); }
+.donut-wrap { display:flex; align-items:center; gap:24px; }
+.donut-svg { flex-shrink:0; }
+.donut-legend { display:flex; flex-direction:column; gap:10px; }
+.legend-item { display:flex; align-items:center; gap:8px; font-size:13px; }
+.legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.legend-val { font-weight:500; margin-left:auto; padding-left:16px; }
+
+/* HISTORY PAGE */
+.bento-history { grid-template-columns: 1fr; }
+.history-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.history-list { display:flex; flex-direction:column; gap:8px; }
+.history-item { background: var(--surface); border: 0.5px solid var(--border); border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:12px; }
+.history-text { font-size:13px; color: var(--text2); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.history-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.history-time { font-size:11px; color: var(--text3); }
+.clear-btn { background: var(--distraction-bg); border: 0.5px solid var(--distraction-text); border-radius:8px; padding:6px 14px; font-size:12px; color: var(--distraction-text); cursor:pointer; font-family:inherit; transition:opacity 0.2s; }
+.clear-btn:hover { opacity:0.8; }
+.empty-state { text-align:center; padding:40px 20px; color: var(--text3); font-size:14px; }
+
+/* RESULT CARD — now a bento cell */
+.result-card { display:none; }
+.result-card.visible { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+
+.spinner { display:inline-block; width:13px; height:13px; border:2px solid currentColor; border-top-color:transparent; border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:6px; opacity:0.6; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* z-index fix */
+.topbar, .page, .cell, .chart-wrap, .history-item, .bulk-item { position:relative; z-index:1; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-dot"></div>
+    <span class="logo-text">SmartFlow AI</span>
+  </div>
+  <div class="topbar-right">
+    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">Dark mode</button>
+    <div class="tabs">
+      <button class="tab active" onclick="showPage('analyze', this)">Analyze</button>
+      <button class="tab" onclick="showPage('bulk', this)">Bulk</button>
+      <button class="tab" onclick="showPage('analytics', this); loadStats();">Analytics</button>
+      <button class="tab" onclick="showPage('history', this); loadHistory();">History</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYZE PAGE -->
+<div class="page active" id="page-analyze">
+  <div class="bento bento-analyze">
+    <div class="cell cell-white cell-span2">
+      <div class="cell-lbl lbl-gray">Enter text</div>
+      <textarea id="inputText" placeholder="Type any notification, message or text here..."></textarea>
+      <div class="chips">
+        <span class="chip" onclick="setEx(this)">Meeting at 3pm</span>
+        <span class="chip" onclick="setEx(this)">Win a free iPhone!</span>
+        <span class="chip" onclick="setEx(this)">Invoice due tomorrow</span>
+        <span class="chip" onclick="setEx(this)">Flash sale 50% off</span>
+        <span class="chip" onclick="setEx(this)">Server is down</span>
+      </div>
+      <div class="error-box" id="errorBox"></div>
+      <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">Analyze text</button>
+    </div>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="cell cell-green">
+      <div class="cell-lbl lbl-white">Result</div>
+      <div class="result-top">
+        <div class="result-title" id="resultTitle"></div>
+        <div class="pill" id="resultPill"></div>
+      </div>
+      <div class="result-quote" id="resultQuote"></div>
+      <div class="bar-row"><span>Confidence</span><span id="confVal"></span></div>
+      <div class="bar-bg"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+    </div>
+    <div class="cell cell-dark">
+      <div class="cell-lbl lbl-white">Details</div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-box-label">Classification</div><div class="stat-box-val" id="statClass"></div></div>
+        <div class="stat-box"><div class="stat-box-label">Word count</div><div class="stat-box-val" id="statWords"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BULK PAGE -->
+<div class="page" id="page-bulk">
+  <div class="bento bento-bulk">
+    <div class="cell cell-white cell-span2">
+      <div class="cell-lbl lbl-gray">Paste multiple lines — ek line = ek text</div>
+      <textarea class="bulk-textarea" id="bulkText" placeholder="Your invoice is due tomorrow&#10;Win a free iPhone now!&#10;Meeting cancelled for today&#10;Buy one get one free shoes"></textarea>
+      <button class="bulk-btn" id="bulkBtn" onclick="analyzeBulk()">Analyze all</button>
+    </div>
+    <div class="cell cell-green" id="bulkImpCell" style="display:none;">
+      <div class="cell-lbl lbl-white">Important</div>
+      <div class="stat-big" id="bulkImpCount">0</div>
+      <div class="stat-sub">texts</div>
+    </div>
+    <div class="cell cell-dark" id="bulkDisCell" style="display:none;">
+      <div class="cell-lbl lbl-white">Distraction</div>
+      <div class="stat-big" id="bulkDisCount">0</div>
+      <div class="stat-sub">texts</div>
+    </div>
+    <div class="cell cell-white cell-span2" id="bulkResultsCell" style="display:none;">
+      <div class="cell-lbl lbl-gray">Results</div>
+      <div class="bulk-results" id="bulkResults"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYTICS PAGE -->
+<div class="page" id="page-analytics">
+  <div class="bento bento-analytics">
+    <div class="cell cell-green">
+      <div class="cell-lbl lbl-white">Total</div>
+      <div class="stat-big" id="statTotal">—</div>
+      <div class="stat-sub">analyzed</div>
+    </div>
+    <div class="cell cell-dark">
+      <div class="cell-lbl lbl-white">Important</div>
+      <div class="stat-big" id="statImp">—</div>
+      <div class="stat-sub">texts</div>
+    </div>
+    <div class="cell cell-teal">
+      <div class="cell-lbl lbl-green">Distraction</div>
+      <div class="stat-big-green" id="statDis">—</div>
+      <div class="stat-sub-dark">texts</div>
+    </div>
+    <div class="cell cell-coral">
+      <div class="cell-lbl lbl-coral">Avg conf</div>
+      <div class="stat-big-coral" id="statAvg">—</div>
+      <div class="stat-sub-dark">confidence</div>
+    </div>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title">Classification breakdown</div>
+    <div class="donut-wrap">
+      <svg class="donut-svg" width="120" height="120" viewBox="0 0 120 120" id="donutSvg">
+        <circle cx="60" cy="60" r="45" fill="none" stroke="#e1f5ee" stroke-width="18"/>
+        <circle cx="60" cy="60" r="45" fill="none" stroke="#faece7" stroke-width="18"
+          stroke-dasharray="0 283" id="donutDis" style="transform:rotate(-90deg);transform-origin:60px 60px;transition:stroke-dasharray 0.8s ease;"/>
+        <circle cx="60" cy="60" r="45" fill="none" stroke="#1D9E75" stroke-width="18"
+          stroke-dasharray="0 283" id="donutImp" style="transform:rotate(-90deg);transform-origin:60px 60px;transition:stroke-dasharray 0.8s ease;"/>
+      </svg>
+      <div class="donut-legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#1D9E75"></div>
+          <span style="color:var(--text2)">Important</span>
+          <span class="legend-val" id="legendImp">0</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#D85A30"></div>
+          <span style="color:var(--text2)">Distraction</span>
+          <span class="legend-val" id="legendDis">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY PAGE -->
+<div class="page" id="page-history">
+  <div class="bento bento-history">
+    <div class="cell cell-dark">
+      <div class="history-header">
+        <span style="font-size:13px; color:rgba(255,255,255,0.4);">Last 50 results</span>
+        <button class="clear-btn" onclick="clearHistory()">Clear all</button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let isDark = false;
+
+  function toggleTheme() {
+    isDark = !isDark;
+    document.body.classList.toggle('dark', isDark);
+    document.getElementById('themeBtn').textContent = isDark ? 'Light mode' : 'Dark mode';
+  }
+
+  function showPage(name, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    el.classList.add('active');
+  }
+
+  function setEx(el) {
+    document.getElementById('inputText').value = el.textContent;
+  }
+
+  async function analyze() {
+    const text    = document.getElementById('inputText').value.trim();
+    const btn     = document.getElementById('analyzeBtn');
+    const errBox  = document.getElementById('errorBox');
+    const resCard = document.getElementById('resultCard');
+    errBox.style.display = 'none';
+    resCard.className = 'result-card';
+    if (!text) { errBox.textContent = 'Please enter some text.'; errBox.style.display = 'block'; return; }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Analyzing...';
+    try {
+      const res  = await fetch('/predict', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text}) });
+      const data = await res.json();
+      if (data.error) { errBox.textContent = data.error; errBox.style.display = 'block'; return; }
+      const isImp = data.label === 'Important';
+      const words = text.split(/\s+/).filter(Boolean).length;
+      document.getElementById('resultTitle').textContent  = isImp ? 'Important' : 'Distraction';
+      const pill = document.getElementById('resultPill');
+      pill.textContent  = isImp ? 'High priority' : 'Low priority';
+      pill.className    = 'pill ' + (isImp ? 'pill-important' : 'pill-distraction');
+      document.getElementById('resultQuote').textContent  = '"' + data.text + '"';
+      document.getElementById('confVal').textContent      = data.confidence.toFixed(1) + '%';
+      const bar = document.getElementById('barFill');
+      bar.style.width   = '0%';
+      bar.className     = 'bar-fill ' + (isImp ? 'bar-imp' : 'bar-dis');
+      setTimeout(() => bar.style.width = data.confidence.toFixed(1) + '%', 50);
+      document.getElementById('statClass').textContent = data.label;
+      document.getElementById('statWords').textContent = words + ' words';
+      resCard.className = 'result-card visible';
+    } catch(e) {
+      errBox.textContent = 'Could not connect. Make sure server is running.';
+      errBox.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Analyze text';
+    }
+  }
+
+  async function analyzeBulk() {
+    const raw   = document.getElementById('bulkText').value;
+    const texts = raw.split('\n').map(t => t.trim()).filter(Boolean);
+    const btn   = document.getElementById('bulkBtn');
+    if (!texts.length) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Analyzing ' + texts.length + ' texts...';
+    document.getElementById('bulkResults').innerHTML = '';
+    document.getElementById('bulkImpCell').style.display = 'none';
+    document.getElementById('bulkDisCell').style.display = 'none';
+    document.getElementById('bulkResultsCell').style.display = 'none';
+    try {
+      const res  = await fetch('/batch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({texts}) });
+      const data = await res.json();
+      let impCount = 0, disCount = 0;
+      const html = data.results.map(r => {
+        const isImp = r.label === 'Important';
+        if (isImp) impCount++; else disCount++;
+        return `<div class="bulk-item">
+          <div class="bulk-item-text">${r.text}</div>
+          <div class="bulk-item-right">
+            <span class="bulk-conf">${r.confidence.toFixed(1)}%</span>
+            <span class="pill ${isImp ? 'pill-important' : 'pill-distraction'}">${r.label}</span>
+          </div>
+        </div>`;
+      }).join('');
+      document.getElementById('bulkResults').innerHTML = html;
+      document.getElementById('bulkImpCount').textContent = impCount;
+      document.getElementById('bulkDisCount').textContent = disCount;
+      document.getElementById('bulkImpCell').style.display = 'block';
+      document.getElementById('bulkDisCell').style.display = 'block';
+      document.getElementById('bulkResultsCell').style.display = 'block';
+    } catch(e) {
+      alert('Error connecting to server.');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Analyze all';
+    }
+  }
+
+  async function loadStats() {
+    try {
+      const res  = await fetch('/stats');
+      const data = await res.json();
+      document.getElementById('statTotal').textContent = data.total;
+      document.getElementById('statImp').textContent   = data.important;
+      document.getElementById('statDis').textContent   = data.distraction;
+      document.getElementById('statAvg').textContent   = data.avg_confidence.toFixed(1) + '%';
+      document.getElementById('legendImp').textContent = data.important;
+      document.getElementById('legendDis').textContent = data.distraction;
+      const circ = 2 * Math.PI * 45;
+      const impFrac = data.total > 0 ? data.important / data.total : 0;
+      const disFrac = data.total > 0 ? data.distraction / data.total : 0;
+      const impArc  = impFrac * circ;
+      const disArc  = disFrac * circ;
+      setTimeout(() => {
+        document.getElementById('donutImp').setAttribute('stroke-dasharray', impArc.toFixed(1) + ' ' + circ.toFixed(1));
+        document.getElementById('donutDis').setAttribute('stroke-dasharray', disArc.toFixed(1) + ' ' + circ.toFixed(1));
+        document.getElementById('donutDis').style.strokeDashoffset = -impArc.toFixed(1);
+      }, 100);
+    } catch(e) {}
+  }
+
+  async function loadHistory() {
+    try {
+      const res  = await fetch('/history');
+      const data = await res.json();
+      const list = document.getElementById('historyList');
+      if (!data.history.length) {
+        list.innerHTML = '<div class="empty-state">No history yet. Analyze some text first!</div>';
+        return;
+      }
+      list.innerHTML = data.history.map(h => {
+        const isImp = h.label === 'Important';
+        return `<div class="history-item">
+          <div class="history-text">${h.text}</div>
+          <div class="history-right">
+            <span class="history-time">${h.timestamp}</span>
+            <span class="pill ${isImp ? 'pill-important' : 'pill-distraction'}">${h.label}</span>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) {}
+  }
+
+  async function clearHistory() {
+    if (!confirm('Sari history delete karo?')) return;
+    await fetch('/clear_history', { method:'POST' });
+    loadHistory();
+  }
+
+  document.getElementById('inputText').addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'Enter') analyze();
+  });
+</script>
+
+<!-- DOT GRID -->
+<canvas id="dotGrid" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;"></canvas>
+<script>
+  const dotCanvas = document.getElementById('dotGrid');
+  const dctx = dotCanvas.getContext('2d');
+  let dMouse = { x: 0.5, y: 0.5, tx: 0.5, ty: 0.5 };
+
+  function resizeDot() {
+    dotCanvas.width  = window.innerWidth;
+    dotCanvas.height = window.innerHeight;
+  }
+  resizeDot();
+  window.addEventListener('resize', resizeDot);
+
+  document.addEventListener('mousemove', e => {
+    dMouse.tx = e.clientX / window.innerWidth;
+    dMouse.ty = e.clientY / window.innerHeight;
+  });
+
+  function drawDotGrid() {
+    const w = dotCanvas.width;
+    const h = dotCanvas.height;
+    dctx.clearRect(0, 0, w, h);
+
+    dMouse.x += (dMouse.tx - dMouse.x) * 0.06;
+    dMouse.y += (dMouse.ty - dMouse.y) * 0.06;
+
+    const spacing = 28;
+    const cols    = Math.ceil(w / spacing) + 2;
+    const rows    = Math.ceil(h / spacing) + 2;
+    const offX    = (dMouse.x - 0.5) * 20;
+    const offY    = (dMouse.y - 0.5) * 20;
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x    = c * spacing + offX;
+        const y    = r * spacing + offY;
+        const dx   = (x / w) - dMouse.x;
+        const dy   = (y / h) - dMouse.y;
+        const dist  = Math.sqrt(dx*dx + dy*dy);
+        const alpha = Math.max(0.06, 0.22 - dist * 0.7);
+        const size  = Math.max(0.8, 1.8 - dist * 3);
+
+        dctx.globalAlpha = alpha;
+        dctx.fillStyle   = isDark ? 'rgb(255,182,193)' : 'rgb(30,20,20)';
+        dctx.beginPath();
+        dctx.arc(x, y, size, 0, Math.PI*2);
+        dctx.fill();
+      }
+    }
+    dctx.globalAlpha = 1;
+    requestAnimationFrame(drawDotGrid);
+  }
+  drawDotGrid();
+</script>
+</body>
+</html>
